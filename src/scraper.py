@@ -2,7 +2,6 @@
 
 Read-only: it only opens public posts, expands comments and reads them.
 """
-import csv
 import os
 import random
 import sys
@@ -94,29 +93,18 @@ def scrape_post(page, url, limit):
     return page.evaluate(EXTRACT_JS)[:limit]
 
 
-def run(limit=400):
-    urls = [u.strip() for u in open(config.POSTS) if u.strip() and not u.startswith("#")]
-    if not urls:
-        sys.exit(f"No URLs in {config.POSTS}")
-    new = not config.RAW.exists()
-    with sync_playwright() as pw, open(config.RAW, "a", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["text", "timestamp", "reactions", "source_post", "collected_at"])
-        if new:
-            w.writeheader()
+def fetch_many(urls, limit):
+    """Optional browser collector for Facebook (no official API covers other pages' public comments).
+    Yields (url, rows); one bad post must not lose the rest."""
+    with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=not os.environ.get("SHOW"))
         ctx = browser.new_context(user_agent=UA, viewport={"width": 1280, "height": 900}, locale="en-US")
         ctx.add_cookies(fb_cookies(config.COOKIES))
         page = ctx.new_page()
         for url in urls:
-            print(url)
             try:
-                rows = scrape_post(page, url, limit)
-            except Exception as e:  # one bad post must not lose the rest
+                yield url, scrape_post(page, url, limit)
+            except Exception as e:
                 print("  failed:", e)
-                continue
-            for r in rows:
-                w.writerow({**r, "source_post": url, "collected_at": time.strftime("%Y-%m-%d")})
-            f.flush()
-            print(f"  saved {len(rows)} comments        ")
             pause(8, 15)
         browser.close()

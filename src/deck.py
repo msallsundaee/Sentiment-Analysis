@@ -10,7 +10,7 @@ from src.lexicon import LEXICONS
 def build(section="________"):
     df = pd.read_csv(config.LEXICON)
     ml = config.ML_RESULTS.read_text()
-    posts = [u.strip() for u in open(config.POSTS) if u.strip() and not u.startswith("#")]
+    posts = config.read_urls()
     dist = df.label.value_counts()
     pct = lambda k: f"{dist.get(k, 0) / len(df):.0%}"
     agree = {m: (df[f"{m}_label"] == df.label).mean() for m in LEXICONS}
@@ -32,7 +32,7 @@ def build(section="________"):
         if image:
             s.shapes.add_picture(image, Inches(7), Inches(1.6), width=Inches(5.9))
 
-    pages = sorted({p.split("facebook.com/")[-1].split("/")[0] for p in posts})
+    pages = sorted(set(df.platform)) if "platform" in df else []
     slide(f"Sentiment Analysis: {config.TOPIC}", [
         "Group: Bea, Jesreal, Raphael, Gil, Angel",
         "Course: CS 413 – CS Elective 2 (Affective Computing)",
@@ -42,11 +42,11 @@ def build(section="________"):
         "Social media comments show how people feel about prices, faster than surveys",
         "Sentiment analysis turns thousands of comments into a measurable emotional signal"])
     slide("Dataset & Collection Process", [
-        f"{len(df)} public Facebook comments from {len(posts)} public news-page posts",
-        "Stored: comment text, relative timestamp, reaction count. No names, photos or profile links",
-        "Public posts only; read-only (no likes, replies or posting)",
+        f"{len(df)} public comments from {len(posts)} public posts/videos",
+        "Stored: comment text, date, like count. No names, handles, photos or profile links",
+        "Public content only; read-only API access (no posting or interaction)",
         "Non-English comments translated to English (Google Translate) for the lexicons",
-        "Sources: " + ", ".join(pages)], size=18)
+        "Platforms: " + ", ".join(pages) + " (official APIs)"], size=18)
     slide("Preprocessing Techniques", [
         "Translate to English; lowercase; remove URLs, punctuation, digits, emojis",
         "Tokenize (NLTK); remove English stopwords; lemmatize (WordNet)",
@@ -71,6 +71,6 @@ def build(section="________"):
     slide("References", [
         "Hutto & Gilbert (2014). VADER. ICWSM.", "Loria. TextBlob. textblob.readthedocs.io",
         "Nielsen (2011). AFINN lexicon.", "Pedregosa et al. (2011). scikit-learn. JMLR.",
-        "Public Facebook posts listed on the dataset slide"])
+        "Public posts/videos listed in data/posts.csv"])
     prs.save(config.DECK)
     return len(prs.slides)

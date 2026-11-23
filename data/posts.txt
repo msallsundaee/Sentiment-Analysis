@@ -1,1 +1,0 @@
-# One public Facebook post URL per line (news pages only, regular posts, not reels).

@@ -1,6 +1,7 @@
 """CLI for the sentiment-analysis project.
 
-  python main.py scrape [--limit N]   Task 1: data/posts.txt -> data/raw/raw_comments.csv
+  python main.py scrape [--limit N] [--facebook]
+                                      Task 1: data/posts.csv -> data/raw/raw_comments.csv (YouTube/Reddit APIs)
   python main.py analyze              Tasks 2-4: translate, preprocess, lexicons, ML
   python main.py deck [--section X]   Task 6: results/Sentiment_Analysis_Inflation.pptx
 """
@@ -22,13 +23,15 @@ def analyze():
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("scrape").add_argument("--limit", type=int, default=400, help="max comments per post")
+    sc = sub.add_parser("scrape")
+    sc.add_argument("--limit", type=int, default=400, help="max comments per post")
+    sc.add_argument("--facebook", action="store_true", help="also scrape Facebook links in a browser (opt-in)")
     sub.add_parser("analyze")
     sub.add_parser("deck").add_argument("--section", default="________")
     a = ap.parse_args()
     if a.cmd == "scrape":
-        from src import scraper
-        scraper.run(a.limit)
+        from src import collect
+        collect.run(a.limit, a.facebook)
     elif a.cmd == "analyze":
         analyze()
     else:
