@@ -1,7 +1,7 @@
 """Incremental multi-platform collector:
 Scrapes Facebook (via cookies.txt), merges with YouTube and Reddit comments,
 classifies Language, Keyword, and Sentiment, and writes incrementally to:
-- CS412 - Affective Computing Final PIT - Sheet.csv
+- data/comments_sheet.csv
 - data/raw/raw_comments.csv
 - data/posts.csv
 """
@@ -106,7 +106,7 @@ def classify_sentiment(text, vader, afinn):
     return top if votes.count(top) > 1 else "Neutral"
 
 def save_all_comments(all_comments, header, side_refs):
-    # Write out to CS412 - Affective Computing Final PIT - Sheet.csv
+    # Write out to data/comments_sheet.csv
     output_rows = [header]
     for idx, c in enumerate(all_comments):
         cid = f"C{idx+1:04d}"
@@ -126,7 +126,7 @@ def save_all_comments(all_comments, header, side_refs):
         ]
         output_rows.append(main_cols + side)
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
+    with open("data/comments_sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerows(output_rows)
 
@@ -152,7 +152,7 @@ def main():
     all_comments = []
     seen_texts = set()
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
+    with open("data/comments_sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
         existing_rows = list(csv.reader(f))
 
     header = existing_rows[0]

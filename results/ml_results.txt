@@ -1,37 +1,37 @@
-Comments: 1510
+Comments: 1505
 Label distribution:
 label
-neutral     651
-positive    470
-negative    389
+positive    539
+neutral     527
+negative    439
 
 == LogisticRegression ==
               precision    recall  f1-score   support
 
-    negative       0.59      0.65      0.62        78
-     neutral       0.68      0.73      0.71       130
-    positive       0.64      0.52      0.57        94
+    negative       0.63      0.61      0.62        88
+     neutral       0.66      0.71      0.68       105
+    positive       0.69      0.65      0.67       108
 
-    accuracy                           0.65       302
-   macro avg       0.64      0.64      0.63       302
-weighted avg       0.65      0.65      0.64       302
+    accuracy                           0.66       301
+   macro avg       0.66      0.66      0.66       301
+weighted avg       0.66      0.66      0.66       301
 
 
 == NaiveBayes ==
               precision    recall  f1-score   support
 
-    negative       0.69      0.53      0.60        78
-     neutral       0.62      0.78      0.69       130
-    positive       0.59      0.50      0.54        94
+    negative       0.68      0.51      0.58        88
+     neutral       0.62      0.48      0.54       105
+    positive       0.53      0.76      0.63       108
 
-    accuracy                           0.63       302
-   macro avg       0.64      0.60      0.61       302
-weighted avg       0.63      0.63      0.62       302
+    accuracy                           0.59       301
+   macro avg       0.61      0.58      0.58       301
+weighted avg       0.61      0.59      0.58       301
 
 
 Best ML model by macro-F1: LogisticRegression
 
 Lexicon agreement with consensus label (inflated: consensus is built from them):
-  vader: 0.852
-  textblob: 0.709
-  afinn: 0.873
+  vader: 0.864
+  textblob: 0.682
+  afinn: 0.864

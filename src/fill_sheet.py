@@ -130,7 +130,7 @@ def run_scrape():
     afinn = Afinn()
     downloader = YoutubeCommentDownloader()
     
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8", errors="ignore") as f:
+    with open("data/comments_sheet.csv", encoding="utf-8", errors="ignore") as f:
         existing_rows = list(csv.reader(f))
     
     header = existing_rows[0]
@@ -260,7 +260,7 @@ def run_scrape():
 
     print(f"\nTotal scraped comments ready: {len(all_comments)}")
     
-    # 3. Write out to CS412 - Affective Computing Final PIT - Sheet.csv
+    # 3. Write out to data/comments_sheet.csv
     # Fill up to 1000 comments
     output_rows = [header]
     for idx in range(1000):
@@ -287,10 +287,10 @@ def run_scrape():
         full_row = main_cols + side
         output_rows.append(full_row)
         
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
+    with open("data/comments_sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerows(output_rows)
-    print("Updated CS412 - Affective Computing Final PIT - Sheet.csv with 1000 rows!")
+    print("Updated data/comments_sheet.csv with 1000 rows!")
     
     # 4. Write data/raw/raw_comments.csv for main.py analyze
     with open(config.RAW, "w", newline="", encoding="utf-8") as f:

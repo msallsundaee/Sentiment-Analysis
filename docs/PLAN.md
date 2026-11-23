@@ -2,7 +2,7 @@
 
 **Course:** CS 413 – CS Elective 2 (Affective Computing), Week 14
 **Topic:** High Inflation and Cost of Living
-**Status:** plan only. Nothing is built or scraped yet.
+**Status:** historical plan (written before any code). See `README.md` for what was actually built.
 
 ## What the assignment requires
 

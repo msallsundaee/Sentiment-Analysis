@@ -1,63 +1,96 @@
 # Task 5: Comparative Analysis Report
 
-**Course:** CS 413 – CS Elective 2 (Affective Computing)  
-**Topic:** High Inflation and Cost of Living in the Philippines  
-**Group:** Bea, Jesreal, Raphael, Gil, Angel  
-**Dataset Size:** 1,510 unique public comments (YouTube: 1,062, Facebook: 345, Reddit: 103)
+**Course:** CS 413 – CS Elective 2 (Affective Computing)
+**Topic:** High Inflation and Cost of Living in the Philippines
+**Group:** Bea, Jesreal, Raphael, Gil, Angel
+**Dataset:** 1,505 unique public comments from 60 sources (YouTube 1,059, Facebook 343, Reddit 103)
 
----
+All numbers below come from `results/ml_results.txt`, `results/ml_metrics.json` and
+`data/processed/lexicon_results.csv`. Rerun `python main.py analyze` to reproduce them.
+
+## How to read the scores
+
+We have no hand-labelled comments. Each comment's label is the majority vote of VADER, TextBlob
+and AFINN on the English translation. The ML models are trained and tested on those labels, so
+their accuracy measures how well TF-IDF + ML reproduces the lexicon vote, not how well it matches
+human judgement. The lexicon "agreement" figures are inflated for the same reason: each lexicon is
+one of the three voters.
 
 ## 1. Which method performed best?
 
-Between the machine learning models and the lexicon-based methods:
-* **Best Machine Learning Model:** **Logistic Regression** (with balanced class weights) achieved the best overall performance with:
-  * **Accuracy:** **65%** (vs. 63% for Multinomial Naive Bayes)
-  * **Macro-averaged F1-Score:** **0.63** (vs. 0.61 for Naive Bayes)
-  * **Per-Class F1-Scores:** Negative: 0.62, Neutral: 0.71, Positive: 0.57
-* **Lexicon Methods:** 
-  * **AFINN** exhibited the highest agreement with the consensus label (**87.3%**), closely followed by **VADER** (**85.2%**), while **TextBlob** lagged at **70.9%**.
-* **Comparative Assessment:**
-  * While lexicons rely on predefined general-purpose polarity dictionaries, **Logistic Regression + TF-IDF** performed best at identifying domain-specific terminology (e.g., *"presyo"*, *"bilihin"*, *"fuel subsidy"*, *"kadiwa"*, *"pamasahe"*). 
-  * Naive Bayes suffered from its conditional independence assumption, struggling with negated sentiment and sarcastic phrasing common in Philippine political and economic discourse.
+| Method | Result |
+|---|---|
+| Logistic Regression (TF-IDF, balanced classes) | 66% accuracy, 0.66 macro-F1 |
+| Multinomial Naive Bayes (TF-IDF) | 59% accuracy, 0.58 macro-F1 |
+| VADER | agrees with the consensus on 86.4% of comments |
+| AFINN | agrees with the consensus on 86.4% of comments |
+| TextBlob | agrees with the consensus on 68.2% of comments |
 
----
+- **Best ML model: Logistic Regression.** Its per-class F1 is even: negative 0.62, neutral 0.68,
+  positive 0.67. Test set: 301 comments (1,204 for training).
+- **Naive Bayes** leans on the positive class (recall 0.76) and misses half of the negative and
+  neutral comments (recall 0.51 and 0.48).
+- **Among lexicons,** VADER and AFINN track the consensus equally; TextBlob is the outlier.
+- With chance at about 33% for three classes, 66% shows the model learned the lexicons' pattern,
+  but a third of test comments are still labelled differently.
 
 ## 2. Why did the lexicons differ from ML?
 
-The divergence between lexicon-based scores and machine learning predictions stems from three key factors:
+1. **Different information.** A lexicon scores each word from a fixed list and sums the result.
+   TF-IDF + ML has no built-in word polarity; it learns from 1,204 comments which words and
+   two-word phrases go with each label. Words outside the lexicons (place names, politicians,
+   untranslated Tagalog) can still carry weight for the model.
+2. **The lexicons disagree with each other.** All three give the same label on only 47.6% of
+   comments, and all three differ on 6.6%. TextBlob calls 40% of comments neutral and only 20%
+   negative; AFINN calls 35% negative. The model is trained on a vote among sources that often
+   conflict, which limits how high its score can go.
+3. **Translation and code-switching.** 383 of 1,505 comments changed when translated. Taglish
+   comments that Google detected as English were left as they were, so some Tagalog words still
+   reach the lexicons, which ignore them and push the comment toward neutral.
+4. **Sarcasm and short replies.** One-word or joking comments ("winner", laughing emojis after a
+   complaint) get a positive score from surface words. Neither approach can see the irony.
 
-1. **Static Polarity vs. Contextual Co-occurrence:**
-   * Lexicons evaluate words in isolation based on static numerical scores. Words like *"shock"*, *"soar"*, or *"climb"* in economic news headlines (e.g., *"inflation soars to 7.8%"*) are treated as intensely negative by VADER/AFINN, even when the comment simply quotes statistical reports neutrally.
-   * Conversely, ML with TF-IDF unigram and bigram features captures learned phrase combinations that distinguish informational commentary from genuine frustration.
+## 3. What is the emotional distribution of the domain?
 
-2. **Taglish Code-Switching & Translation Noise:**
-   * Philippine social media discourse frequently mixes English, Tagalog, and regional languages (Taglish). Because VADER, TextBlob, and AFINN are English-only, comments had to be machine-translated.
-   * Translation often strips colloquial Tagalog slang and intensifiers (e.g., *"lutang"*, *"bangag"*, *"pahirap"*, *"diskarte"*), leading to lexicon misclassifications.
+| Label | Comments | Share |
+|---|---|---|
+| Positive | 539 | 35.8% |
+| Neutral | 527 | 35.0% |
+| Negative | 439 | 29.2% |
 
-3. **Sarcasm and Cultural Satire:**
-   * Many negative comments wrap criticism in humorous or satirical language (e.g., *"fine daw sabi bangag"*, *"senateflix directed by BBM"*, *"nobody eats a whole fish now"*). Lexicons fail to register irony and frequently label sarcastic praise as "Positive" due to surface words like *"fine"* or *"enjoy"*.
+By platform:
 
----
+| Platform | Negative | Neutral | Positive |
+|---|---|---|---|
+| YouTube (1,059) | 35% | 33% | 32% |
+| Reddit (103) | 25% | 27% | 48% |
+| Facebook (343) | 12% | 45% | 43% |
 
-## 3. What is the emotional distribution of your domain?
+- The split is close to even. The domain is not overwhelmingly negative by this measure.
+- YouTube is the most negative platform; Facebook is the least.
+- "Positive" here means positive wording, not satisfaction with prices. Sarcasm, jokes and
+  praise for a video's host all count as positive, so the real level of frustration is probably
+  higher than 29%.
 
-Across the 1,510 public comments analyzed:
-* **Neutral (43.1% – 651 comments):**
-  * The largest single group comprises factual inquiries, news reposting, and citations of official statistics from the Philippine Statistics Authority (PSA) and Bangko Sentral ng Pilipinas (BSP) (e.g., discussions on the 7.2% and 7.8% CPI benchmarks).
-* **Positive / Coping (31.1% – 470 comments):**
-  * Expresses relief, optimism, mutual aid, and active coping strategies (e.g., support for Kadiwa discounted stores, urban farming, fuel subsidies for public transport drivers, and community solidarity).
-* **Negative (25.8% – 389 comments):**
-  * Marked by vocal frustration, economic anxiety, skepticism toward government price mitigation, and distress over grocery bills, rice price ceilings, and utility hikes.
-
----
+Before translation the same pipeline reported 43% neutral, because the lexicons could not read
+the Tagalog comments. Translating them moved many out of neutral.
 
 ## 4. How does this relate to affective computing?
 
-Affective Computing focuses on enabling digital systems to recognize, interpret, process, and simulate human emotions:
+- **Emotion from text at scale.** Affective computing aims to let machines recognise human
+  emotion. Comment streams give a fast, low-cost signal of how people feel about prices, well
+  ahead of quarterly consumer surveys.
+- **Polarity is not emotion.** Positive/negative/neutral hides the difference between anger,
+  fear, resignation and humour, which is what matters for cost-of-living discourse.
+- **Language and culture matter.** English word lists miss Taglish, Cebuano and sarcasm. A useful
+  affective system for Philippine social media needs multilingual models and human-labelled data.
 
-1. **Real-Time Economic Emotional Barometer:**
-   * Traditional economic monitoring relies on quarterly survey indices (e.g., Consumer Expectation Surveys) which have significant reporting lag. Affective computing applied to social media streams transforms unstructured public discourse into immediate, high-frequency emotional barometers of economic hardship.
-2. **Beyond Polarity to Context-Aware Affect:**
-   * This project highlights that true affective computing cannot rely solely on dictionary lookup tables. Emotional state estimation in diverse populations requires cultural context, code-switching tolerance, and multi-modal contextual embeddings.
-3. **Actionable Civic Decision Support:**
-   * By identifying spikes in negative public affect around specific price hikes (e.g., rice, transport fares, electricity), affective systems can help policymakers detect community vulnerability and target emergency subsidies before severe economic distress compounds.
+## Limitations
+
+- No human labels; all scores are relative to the lexicon vote.
+- One YouTube video supplies 45% of the comments, and many comments react to the video or to
+  other commenters rather than to prices. Only 397 comments contain a tracked price keyword.
+- Machine translation adds noise, and mixed-language comments are only partly translated.
+- Comment dates are estimated from relative timestamps ("3 weeks ago"); many are simply the
+  collection date.
+- The dataset was collected with unofficial tools (see `README.md`).

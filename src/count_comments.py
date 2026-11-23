@@ -4,7 +4,7 @@ import csv
 
 downloader = YoutubeCommentDownloader()
 
-with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8", errors="ignore") as f:
+with open("data/comments_sheet.csv", encoding="utf-8", errors="ignore") as f:
     rows = list(csv.DictReader(f))
 
 urls = []

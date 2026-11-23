@@ -3,6 +3,7 @@
 Labels are the lexicon consensus (no hand labels), so the ML score measures how well
 a model imitates the lexicons, not agreement with human judgement. Stated in the report.
 """
+import json
 import shutil
 
 import matplotlib
@@ -23,12 +24,13 @@ def run(df, col="text_en"):
     Xtr, Xte, ytr, yte = train_test_split(df[col], df.label, test_size=0.2, random_state=42, stratify=df.label)
     vec = TfidfVectorizer(ngram_range=(1, 2), min_df=2, stop_words="english")
     A, B = vec.fit_transform(Xtr), vec.transform(Xte)
-    best = None
+    best, metrics = None, {}
     for name, model in [("LogisticRegression", LogisticRegression(max_iter=1000, class_weight="balanced")),
                         ("NaiveBayes", MultinomialNB())]:
         pred = model.fit(A, ytr).predict(B)
         kw = dict(labels=config.LABELS, zero_division=0)
-        f1 = classification_report(yte, pred, output_dict=True, **kw)["macro avg"]["f1-score"]
+        metrics[name] = classification_report(yte, pred, output_dict=True, **kw)
+        f1 = metrics[name]["macro avg"]["f1-score"]
         out += [f"== {name} ==", classification_report(yte, pred, **kw), ""]
         ConfusionMatrixDisplay(confusion_matrix(yte, pred, labels=config.LABELS),
                                display_labels=config.LABELS).plot(cmap="Blues")
@@ -43,4 +45,5 @@ def run(df, col="text_en"):
     out += ["", "Lexicon agreement with consensus label (inflated: consensus is built from them):"]
     out += [f"  {m}: {(df[f'{m}_label'] == df.label).mean():.3f}" for m in LEXICONS]
     config.ML_RESULTS.write_text("\n".join(out))
+    config.ML_METRICS.write_text(json.dumps({"best": best[1], "train": len(ytr), "test": len(yte), "models": metrics}, indent=1))
     return "\n".join(out)

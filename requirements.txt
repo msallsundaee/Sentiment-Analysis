@@ -1,5 +1,4 @@
 afinn>=0.1
-deep-translator>=1.11.4
 matplotlib>=3.10.0
 nltk>=3.10.4
 pandas>=2.2.0
@@ -11,3 +10,6 @@ vaderSentiment>=3.3.2
 python-pptx>=1.0.2
 google-api-python-client>=2.200.0
 praw>=8.0.0
+requests>=2.31
+certifi
+youtube-comment-downloader>=0.1.70

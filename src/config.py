@@ -16,8 +16,11 @@ LEXICON = ROOT / "data" / "processed" / "lexicon_results.csv"       # Task 3 del
 TRANSLATIONS = ROOT / "data" / "processed" / "translations.json"    # translation cache
 
 FIGURES = ROOT / "results" / "figures"
+ML_METRICS = ROOT / "results" / "ml_metrics.json"                   # same numbers, for deck/charts
 ML_RESULTS = ROOT / "results" / "ml_results.txt"                    # Task 4 deliverable
 DECK = ROOT / "results" / "Sentiment_Analysis_Inflation.pptx"       # Task 6 deliverable
+
+SHEET = ROOT / "data" / "comments_sheet.csv"                        # group sheet: comments + Comment Text EN
 
 LABELS = ["negative", "neutral", "positive"]
 TOPIC = "High Inflation and Cost of Living"
@@ -26,7 +29,7 @@ for d in (RAW.parent, CLEANED.parent, FIGURES):
     d.mkdir(parents=True, exist_ok=True)
 
 
-def secret(name):
+def secret(name, required=True):
     """API key from the environment or secrets/.env."""
     if name in os.environ:
         return os.environ[name]
@@ -35,7 +38,9 @@ def secret(name):
             k, _, v = line.partition("=")
             if k.strip() == name and v.strip():
                 return v.strip().strip("\"'")
-    raise SystemExit(f"Missing {name}: add it to {ENV}")
+    if required:
+        raise SystemExit(f"Missing {name}: add it to {ENV}")
+    return None
 
 
 def platform_of(url):

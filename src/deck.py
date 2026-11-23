@@ -1,4 +1,6 @@
 """Task 6: build the comprehensive presentation with rich visual charts from the pipeline outputs."""
+import json
+
 import pandas as pd
 from pptx import Presentation
 from pptx.dml.color import RGBColor
@@ -9,7 +11,7 @@ from src import config
 from src.lexicon import LEXICONS
 
 
-def build(section="CS412"):
+def build(section="CS412", instructor="________"):
     if not config.LEXICON.exists() or not config.ML_RESULTS.exists():
         raise SystemExit(
             "Missing analysis results. Please run 'python main.py analyze' first before generating the presentation deck."
@@ -22,6 +24,19 @@ def build(section="CS412"):
     best = ml.split("Best ML model by macro-F1:")[1].split("\n")[0].strip()
     fig = lambda n: str(config.FIGURES / n)
 
+    # every number on the slides is computed here, nothing is typed in by hand
+    mm = json.loads(config.ML_METRICS.read_text())
+    lr, nb = mm["models"]["LogisticRegression"], mm["models"]["NaiveBayes"]
+    plat = df.platform.str.capitalize().value_counts()
+    plat_txt = " • ".join(f"{k} ({v:,} comments)" for k, v in plat.items())
+    share = pd.crosstab(df.platform.str.capitalize(), df.label, normalize="index").reindex(columns=config.LABELS, fill_value=0)
+    top_src = df.source_post.value_counts(normalize=True).iloc[0]
+    sheet = pd.read_csv(config.SHEET)
+    n_sheet, n_raw = len(sheet), len(pd.read_csv(config.RAW))
+    lang_txt = ", ".join(f"{k} ({v:,})" for k, v in sheet.dropna(subset=["Sentiment"]).Language.value_counts().items())
+    kws = sheet.dropna(subset=["Sentiment"])["Keyword Matched"].dropna().value_counts()
+    n_changed = int((df.text != df.text_en).sum())
+
     prs = Presentation()
     prs.slide_width, prs.slide_height = Inches(13.33), Inches(7.5)
 
@@ -29,6 +44,7 @@ def build(section="CS412"):
         s = prs.slides.add_slide(prs.slide_layouts[5])
         s.shapes.title.text = title
         s.shapes.title.text_frame.paragraphs[0].font.size = Pt(32)
+        s.shapes.title.left, s.shapes.title.width = Inches(0.6), Inches(12.1)
         tf = s.shapes.add_textbox(Inches(0.6), Inches(1.5), Inches(6.2 if image else 12), Inches(5.5)).text_frame
         tf.word_wrap = True
         for i, b in enumerate(bullets):
@@ -44,8 +60,9 @@ def build(section="CS412"):
     slide(f"Sentiment Analysis: {config.TOPIC}", [
         "Group Members: Bea, Jesreal, Raphael, Gil, Angel",
         "Course: CS 413 – CS Elective 2 (Affective Computing)",
+        f"Instructor: {instructor}",
         f"Section: {section}",
-        f"Domain: {config.TOPIC} in the Philippines"
+        f"Topic: {config.TOPIC} in the Philippines"
     ], size=22)
 
     # 2. Introduction
@@ -60,19 +77,20 @@ def build(section="CS412"):
     s3 = prs.slides.add_slide(prs.slide_layouts[5])
     s3.shapes.title.text = "2. Dataset & Collection Process"
     s3.shapes.title.text_frame.paragraphs[0].font.size = Pt(32)
+    s3.shapes.title.left, s3.shapes.title.width = Inches(0.6), Inches(12.1)
 
     funnel_steps = [
-        ("1,850+", "RAW COLLECTED", [
-            "Gathered from 60+ public discussion threads across YouTube, Facebook, and Reddit.",
-            "Read-only collection of public news broadcasts and community posts."
+        (f"{n_sheet:,}", "COLLECTED", [
+            f"Public comments from {df.source_post.nunique()} public videos, posts and threads (links in data/posts.csv).",
+            "YouTube and Reddit read without login; Facebook read-only through a browser session."
         ], RGBColor(41, 128, 185)),
-        ("1,620", "DOMAIN FILTERED", [
-            "Filtered specifically for Philippine inflation topics: bigas, gasolina, bilihin, presyo, kuryente, pamasahe, and sahod.",
-            "Removed off-topic foreign discussions."
+        (f"{n_raw:,}", "IDENTIFIERS REMOVED", [
+            "@handles in replies stripped from every comment.",
+            "Rows that were only a handle dropped."
         ], RGBColor(52, 73, 94)),
-        (f"{len(df):,}", "FINAL CLEAN DATASET", [
-            "Removed duplicate comments, one-word spam, bot links, and empty entries.",
-            "Stored text, timestamp, and reactions only with ZERO personal identifiers."
+        (f"{len(df):,}", "FINAL DATASET", [
+            "Exact duplicates and comments of 3 characters or fewer removed.",
+            "Stored: text, date, platform, source link. No names, handles or photos."
         ], RGBColor(39, 174, 96))
     ]
 
@@ -115,19 +133,19 @@ def build(section="CS412"):
     banner = s3.shapes.add_textbox(Inches(0.6), Inches(5.8), Inches(12.1), Inches(1.3)).text_frame
     banner.word_wrap = True
     pb1 = banner.paragraphs[0]
-    pb1.text = "Platforms Breakdown: YouTube (1,062 comments) • Facebook (345 comments) • Reddit (103 comments)"
+    pb1.text = f"Platforms: {plat_txt}. Largest single source: {top_src:.0%} of all comments."
     pb1.font.size = Pt(13)
     pb1.font.bold = True
     pb1.font.color.rgb = RGBColor(41, 128, 185)
     pb2 = banner.add_paragraph()
-    pb2.text = "Ethical Protocol: 100% public news posts • No usernames, handles, or photos collected • No automated interaction"
+    pb2.text = "Ethics: public posts only • no usernames, handles or photos stored • read-only, no interaction • dates from relative timestamps are approximate"
     pb2.font.size = Pt(12)
     pb2.font.color.rgb = RGBColor(120, 120, 120)
 
     # 4. Preprocessing Techniques
     slide("3. Preprocessing Techniques", [
-        "Language Normalization: Handled English (1,181), Tagalog (260), Taglish (67), and Cebuano (2) comments.",
-        "Translation Pipeline: Translated non-English comments to English using Google Translate with local persistent caching in translations.json.",
+        f"Languages (keyword-based detection): {lang_txt}.",
+        f"Translation: every comment run through Google Translate (GOOGLETRANSLATE in Google Sheets, auto-detect to English); {n_changed:,} were changed.",
         "Text Cleaning: Lowercased text; stripped URLs, HTML entities, punctuation, emojis, and digits.",
         "Tokenization & Lemmatization: Segmented words using NLTK word_tokenize, filtered stopwords, and applied WordNetLemmatizer.",
         "Output Deliverables: cleaned_comments.csv and language_distribution.png"
@@ -149,50 +167,44 @@ def build(section="CS412"):
     # 6. ML-Based Sentiment Analysis
     slide("5. Machine Learning Sentiment Analysis", [
         "Feature Extraction: TF-IDF Vectorization with unigrams and bigrams (min_df=2, stopwords removed).",
-        "Validation Strategy: 80/20 train/test split with stratified sampling (1,208 train, 302 test).",
-        "Model Performance Comparison:",
-        "  • Logistic Regression: 65% Accuracy, 0.63 Macro-F1",
-        "  • Multinomial Naive Bayes: 63% Accuracy, 0.61 Macro-F1",
-        f"Best Model by Macro-F1: {best} (balanced recall across all sentiment classes).",
+        f"Validation: 80/20 stratified split ({mm['train']:,} train, {mm['test']:,} test).",
+        "Labels: lexicon majority vote (no hand labels), so scores show how well ML imitates the lexicons.",
+        f"  • Logistic Regression: {lr['accuracy']:.0%} accuracy, {lr['macro avg']['f1-score']:.2f} macro-F1",
+        f"  • Multinomial Naive Bayes: {nb['accuracy']:.0%} accuracy, {nb['macro avg']['f1-score']:.2f} macro-F1",
+        f"Best model by macro-F1: {best}.",
         "Output Deliverables: ml_results.txt & confusion_matrix.png"
     ], image="confusion_matrix.png", size=16)
 
     # 7. Model Metrics Comparison
+    b = mm["models"][mm["best"]]
     slide("6. ML Performance Comparison", [
-        "Logistic Regression outperformed Naive Bayes across Accuracy, Recall, and Macro-F1.",
-        "Per-Class F1-Scores for Logistic Regression:",
-        "  • Neutral: 0.71 F1-score (highest due to prevalent statistical news reporting)",
-        "  • Negative: 0.62 F1-score (strong detection of price grievances)",
-        "  • Positive: 0.57 F1-score (captured budgeting and assistance optimism)",
-        "Naive Bayes struggled with correlated features due to conditional independence assumptions.",
-        "Visual Reference: model_comparison_metrics.png"
+        f"Best model by macro-F1: {best}.",
+        f"Per-class F1 ({best}):",
+        *[f"  • {k.capitalize()}: {b[k]['f1-score']:.2f} (precision {b[k]['precision']:.2f}, recall {b[k]['recall']:.2f})" for k in config.LABELS],
+        "Naive Bayes assumes independent features and leans toward the majority class.",
+        "Chart: model_comparison_metrics.png"
     ], image="model_comparison_metrics.png", size=16)
 
-    # 8. Platform & Topic Affective Insights
-    slide("7. Cross-Platform & Keyword Sentiment Patterns", [
-        "Platform Differences: Facebook comments demonstrated the highest proportion of negative affective reactions (distrust and anger over rice/fuel prices).",
-        "YouTube comments featured a strong neutral baseline discussing news broadcast facts.",
-        "Reddit discussions offered in-depth financial planning and economic analysis.",
-        "Key Topic Drivers:",
-        "  • Rice (Bigas) & Fuel (Gasolina): Predominantly negative affect.",
-        "  • Kadiwa stores & Subsidies: Drove positive coping sentiment.",
-        "Visual Reference: platform_sentiment_breakdown.png"
+    # 8. Comparison & discussion (platform view)
+    slide("7. Comparison & Discussion", [
+        *[f"{p}: {r.negative:.0%} negative, {r.neutral:.0%} neutral, {r.positive:.0%} positive" for p, r in share.iterrows()],
+        f"Most negative platform: {share.negative.idxmax()}. Most positive: {share.positive.idxmax()}.",
+        "Lexicons vs ML: lexicons score words one by one; TF-IDF + ML learns which words and phrases go with each label in this domain.",
+        f"Challenges: labels come from the lexicons themselves; translation noise; sarcasm; one source is {top_src:.0%} of the data; many comments react to the video, not to prices.",
     ], image="platform_sentiment_breakdown.png", size=16)
 
-    # 9. Topic Keyword Analysis
-    slide("8. Topic Breakdown: Keywords vs. Sentiment", [
-        "Top Domain Keywords Analyzed: bilihin (1,124 mentions), inflation (126), food (48), oil (22), rent (22), tax (20), prices (20).",
-        "Food and basic grocery items ('bilihin', 'bigas') evoked the highest intensity of negative emotional discourse.",
-        "Utility bills ('kuryente', 'tubig') and transport fares ('pamasahe') triggered strong dissatisfaction.",
-        "Coping strategies ('diskarte', 'bawas gastos', 'solar panels') accounted for constructive positive sentiment.",
-        "Visual Reference: keyword_sentiment_analysis.png"
+    # 9. Topic keywords
+    slide("8. Topic Keywords vs. Sentiment", [
+        f"{int(kws.sum()):,} of {len(df):,} comments contain a tracked price keyword.",
+        "Most frequent: " + ", ".join(f"{k} ({v})" for k, v in kws.head(7).items()) + ".",
+        "The chart shows the sentiment split for each keyword; small groups are indicative only.",
     ], image="keyword_sentiment_analysis.png", size=16)
 
     # 10. Conclusion & Relation to Affective Computing
     slide("9. Conclusion & Relation to Affective Computing", [
-        "Affective Profile: Public discourse is characterized by frustration over daily survival, balanced by resilience and humor.",
-        "Significance for Affective Computing: Demonstrates how machines can capture collective socioeconomic sentiment in real-time, bypassing survey lag.",
-        "Cultural & Linguistic Nuances: Standard Western lexicons miss Taglish sarcasm ('senateflix', 'lutang', 'fine daw'), highlighting the need for culturally contextualized models.",
+        f"Emotional distribution: {pct('negative')} negative, {pct('neutral')} neutral, {pct('positive')} positive (lexicon consensus).",
+        "Affective computing: comment streams give a fast, cheap signal of how people feel about prices, ahead of surveys.",
+        "Limits: word-polarity lexicons built for English miss Taglish, sarcasm and context, so the signal needs culturally aware models and human-labelled data.",
         "Future Enhancements: Transformer-based Tagalog encoders (e.g. RoBERTa-Tagalog) and fine-grained emotion classification (anger, fear, hope)."
     ], size=16)
 
@@ -211,5 +223,5 @@ def build(section="CS412"):
 
 
 if __name__ == "__main__":
-    count = build("CS412")
+    count = build()
     print(f"Successfully generated enhanced presentation deck with {count} slides at {config.DECK}")

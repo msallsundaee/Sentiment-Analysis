@@ -1,6 +1,6 @@
 """Maximal scraper for Philippine inflation & cost of living comments.
 Collects from all sheet YouTube & Reddit URLs plus top official Philippine news broadcasts.
-Saves all comments to CS412 - Affective Computing Final PIT - Sheet.csv and data/raw/raw_comments.csv.
+Saves all comments to data/comments_sheet.csv and data/raw/raw_comments.csv.
 """
 import csv
 import html
@@ -122,7 +122,7 @@ def main():
     afinn = Afinn()
     downloader = YoutubeCommentDownloader()
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
+    with open("data/comments_sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
         existing_rows = list(csv.reader(f))
 
     header = existing_rows[0]
@@ -270,7 +270,7 @@ def main():
     print(f"TOTAL UNIQUE COMMENTS COLLECTED: {total}")
     print(f"==========================================")
 
-    # 3. Write out to CS412 - Affective Computing Final PIT - Sheet.csv
+    # 3. Write out to data/comments_sheet.csv
     # Save every comment collected
     output_rows = [header]
     for idx, c in enumerate(all_comments):
@@ -291,10 +291,10 @@ def main():
         ]
         output_rows.append(main_cols + side)
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
+    with open("data/comments_sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerows(output_rows)
-    print(f"Updated CS412 - Affective Computing Final PIT - Sheet.csv with {total} comments!")
+    print(f"Updated data/comments_sheet.csv with {total} comments!")
 
     # 4. Write data/raw/raw_comments.csv
     with open(config.RAW, "w", newline="", encoding="utf-8") as f:

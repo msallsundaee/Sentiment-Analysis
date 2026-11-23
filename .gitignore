@@ -1,8 +1,6 @@
 .venv/
 __pycache__/
 secrets/
-data/raw/*
-data/processed/*
-!data/raw/.gitkeep
-!data/processed/.gitkeep
+# CSV deliverables are committed (no identifiers in them); the translation cache is not
+data/processed/translations.json
 .DS_Store

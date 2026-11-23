@@ -1,7 +1,7 @@
 import csv
 from collections import Counter
 
-with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8", errors="ignore") as f:
+with open("data/comments_sheet.csv", encoding="utf-8", errors="ignore") as f:
     reader = csv.DictReader(f)
     rows = list(reader)
 

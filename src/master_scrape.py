@@ -1,11 +1,11 @@
 """Master scraper for CS412 Final PIT:
-Scrapes EVERY YouTube, Reddit, and Facebook link from CS412 - Affective Computing Final PIT - Sheet.csv.
+Scrapes EVERY YouTube, Reddit, and Facebook link from data/comments_sheet.csv.
 - All 13 YouTube videos
 - All 7 Reddit threads
 - All 42 Facebook posts (using secrets/cookies.txt)
 
 Saves incrementally to:
-- CS412 - Affective Computing Final PIT - Sheet.csv
+- data/comments_sheet.csv
 - data/raw/raw_comments.csv
 - data/posts.csv
 """
@@ -145,7 +145,7 @@ def save_state(all_comments, header, side_refs):
         ]
         output_rows.append(main_cols + side)
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
+    with open("data/comments_sheet.csv", "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
         w.writerows(output_rows)
 
@@ -170,7 +170,7 @@ def main():
     all_comments = []
     seen_texts = set()
 
-    with open("CS412 - Affective Computing Final PIT - Sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
+    with open("data/comments_sheet.csv", encoding="utf-8-sig", errors="ignore") as f:
         existing_rows = list(csv.reader(f))
 
     header = existing_rows[0]
