@@ -30,13 +30,64 @@ tests/               python -m tests.test_basic
 
 ## Run
 
+### Setup Virtual Environment
+
+**Windows (PowerShell):**
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\pip install -r requirements.txt
+.\.venv\Scripts\playwright install chromium
 ```
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/playwright install chromium
-# put links in data/posts.csv and API keys in secrets/.env
-.venv/bin/python main.py scrape --limit 400      # add --facebook to also scrape Facebook links
-.venv/bin/python main.py analyze
-.venv/bin/python main.py deck --section "<section>"
+
+**macOS / Linux:**
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/playwright install chromium
 ```
+
+### Running the Tasks
+
+1. **Quick Test / Seed Data (Optional):**
+   ```powershell
+   # Windows:
+   .\.venv\Scripts\python -m src.seed_data
+   # macOS/Linux:
+   .venv/bin/python -m src.seed_data
+   ```
+
+2. **Collection (Task 1):**
+   Put links in `data/posts.csv` and API keys in `secrets/.env` (see `secrets/.env.example`).
+   ```powershell
+   # Windows:
+   .\.venv\Scripts\python main.py scrape --limit 400      # add --facebook to also scrape Facebook links
+   # macOS/Linux:
+   .venv/bin/python main.py scrape --limit 400
+   ```
+
+3. **Analysis (Tasks 2–4):**
+   ```powershell
+   # Windows:
+   .\.venv\Scripts\python main.py analyze
+   # macOS/Linux:
+   .venv/bin/python main.py analyze
+   ```
+
+4. **Generate Presentation Deck (Task 6):**
+   ```powershell
+   # Windows:
+   .\.venv\Scripts\python main.py deck --section "CS413"
+   # macOS/Linux:
+   .venv/bin/python main.py deck --section "CS413"
+   ```
+
+5. **Run Tests:**
+   ```powershell
+   # Windows:
+   .\.venv\Scripts\python -m tests.test_basic
+   # macOS/Linux:
+   .venv/bin/python -m tests.test_basic
+   ```
 
 ## Ethics and limits
 

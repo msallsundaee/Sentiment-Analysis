@@ -1,3 +1,6 @@
+import tempfile
+from pathlib import Path
+
 """Run: .venv/bin/python -m tests.test_basic"""
 from src.lexicon import consensus, to_label
 from src.preprocess import clean
@@ -14,7 +17,9 @@ def test_labels():
     assert consensus(["positive", "neutral", "negative"]) == "neutral"
 
 
-def test_cookies_only_facebook(tmp_path="/tmp/_cookies_test.txt"):
+def test_cookies_only_facebook(tmp_path=None):
+    if tmp_path is None:
+        tmp_path = str(Path(tempfile.gettempdir()) / "_cookies_test.txt")
     rows = [".facebook.com\tTRUE\t/\tTRUE\t0\tc_user\t1", ".facebook.com\tTRUE\t/\tTRUE\t0\txs\t2",
             ".google.com\tTRUE\t/\tTRUE\t0\tSID\t3"]
     open(tmp_path, "w").write("\n".join(rows))

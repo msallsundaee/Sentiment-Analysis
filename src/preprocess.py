@@ -30,5 +30,12 @@ def clean(text):
 
 
 def load_raw():
+    if not config.RAW.exists() or config.RAW.stat().st_size == 0:
+        raise SystemExit(
+            f"Missing or empty {config.RAW}.\n"
+            "Run 'python main.py scrape' first (or place comments in data/raw/raw_comments.csv)."
+        )
     df = pd.read_csv(config.RAW).dropna(subset=["text"]).drop_duplicates("text")
+    if len(df) == 0:
+        raise SystemExit(f"No valid comments with text found in {config.RAW}.")
     return df[df.text.str.len() > 3].reset_index(drop=True)
