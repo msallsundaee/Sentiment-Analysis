@@ -34,7 +34,7 @@ def run(df, col="text_en"):
         out += [f"== {name} ==", classification_report(yte, pred, **kw), ""]
         ConfusionMatrixDisplay(confusion_matrix(yte, pred, labels=config.LABELS),
                                display_labels=config.LABELS).plot(cmap="Blues")
-        plt.title(name)
+        plt.title({"LogisticRegression": "Logistic Regression", "NaiveBayes": "Naive Bayes"}[name])
         plt.tight_layout()
         plt.savefig(config.FIGURES / f"confusion_matrix_{name}.png", dpi=150)
         plt.close()

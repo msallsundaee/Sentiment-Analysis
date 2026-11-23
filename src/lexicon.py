@@ -41,6 +41,7 @@ def plot_distribution(df):
     counts.T.plot(kind="bar", stacked=True, color=["#c0392b", "#95a5a6", "#27ae60"], figsize=(7, 4))
     plt.title(f"Sentiment distribution: {config.TOPIC}")
     plt.ylabel("Comments")
+    plt.legend(title="Label", loc="upper left", bbox_to_anchor=(1.0, 1.0))
     plt.xticks(rotation=0)
     plt.tight_layout()
     plt.savefig(config.FIGURES / "sentiment_distribution.png", dpi=150)

@@ -28,7 +28,7 @@ def plot_all():
 
     # 1. Platform Sentiment Breakdown
     plt.figure(figsize=(8, 5))
-    cross_tab = pd.crosstab(df["platform"].str.capitalize(), df["label"], normalize="index") * 100
+    cross_tab = pd.crosstab(df["platform"].map({"youtube": "YouTube"}).fillna(df["platform"].str.capitalize()), df["label"], normalize="index") * 100
     for col in config.LABELS:
         if col not in cross_tab.columns:
             cross_tab[col] = 0
@@ -109,12 +109,13 @@ def plot_all():
 
     # 5. Language Breakdown Chart
     plt.figure(figsize=(7, 5))
-    lang_counts = sheet_df["Language"].value_counts()
+    lang_of = sheet_df.drop_duplicates("Comment Text").set_index("Comment Text")["Language"]
+    lang_counts = df.text.map(lang_of).value_counts()  # same 1,505 comments as the other charts
     colors = ["#34495e", "#3498db", "#1abc9c", "#f39c12"]
     wedges, texts, autotexts = plt.pie(
         lang_counts.values,
         labels=lang_counts.index,
-        autopct="%1.1f%%",
+        autopct=lambda p: f"{p:.1f}%" if p >= 1 else "",  # skip tiny slices so labels do not overlap
         startangle=140,
         colors=colors[:len(lang_counts)],
         wedgeprops=dict(width=0.45, edgecolor="white", linewidth=2),
@@ -123,7 +124,7 @@ def plot_all():
     for at in autotexts:
         at.set_fontsize(10)
         at.set_fontweight("bold")
-    plt.title(f"Dataset Language Distribution (N = {len(sheet_df):,})", fontsize=14, fontweight="bold", pad=12)
+    plt.title(f"Dataset Language Distribution (N = {len(df):,})", fontsize=14, fontweight="bold", pad=12)
     plt.tight_layout()
     plt.savefig(config.FIGURES / "language_distribution.png", dpi=200)
     plt.close()

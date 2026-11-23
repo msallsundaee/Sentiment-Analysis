@@ -3,6 +3,7 @@
 Analyses public YouTube, Facebook and Reddit comments about prices, rice, fuel and inflation, then compares
 lexicon-based sentiment (VADER, TextBlob, AFINN) with TF-IDF + Logistic Regression / Naive Bayes.
 The assignment is in `docs/`, the implementation plan in `docs/PLAN.md`.
+**New here? Read [`docs/NAVIGATION.md`](docs/NAVIGATION.md)** for what every file is and how the data flows.
 
 ## Layout
 
